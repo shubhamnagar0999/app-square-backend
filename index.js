@@ -6,6 +6,18 @@ const app = express();
 app.use(express.json());
 
 
+// ----->functions<------
+
+const updateRealtimeFirebase = (key,value) => {
+    // Reference to the specific key in the Realtime Database
+    const keyRef = dbRealtime.ref(`/appliances/${key}`);
+    // Update the value of the key
+    keyRef.set(value);
+    console.log(`Value updated because of set time `);
+}
+
+// ----->functions end<------
+
 const firebaseConfig = {
   apiKey: "AIzaSyBkWhCQ-ertW-D5v1r8BnPJ5ZPE2Bk1FU4",
   authDomain: "iot0999.firebaseapp.com",
@@ -19,6 +31,7 @@ const firebaseConfig = {
 
 firebase.initializeApp(firebaseConfig);
 const db = firebase.firestore();
+const dbRealtime = firebase.database();
 
 app.get("/firestore/get", async (req, res) => {
   try {
@@ -89,7 +102,8 @@ app.post("/mqtt", (req, res) => {
         startHoure: `${req.body.startHoure}`,
         startMin: `${req.body.startMin}`,
         endHoure: `${req.body.endHoure}`,
-        endMin: `${req.body.endMin}`
+        endMin: `${req.body.endMin}`,
+        timer: `${req.body.timer}`
       
     }
     client.publish(applianceNameStatus, JSON.stringify(mqtt_payload), (err) => {
@@ -108,6 +122,41 @@ app.post("/mqtt", (req, res) => {
     console.error("Error:", err);
   });
 });
+
+
+const socketOff = "socketOff";
+// MQTT client for subscribing to a topic
+const client = mqtt.connect(brokerUrl);
+client.on("connect", () => {
+  console.log("Connected to MQTT broker");
+
+  // Subscribe to the specified topic
+  client.subscribe(socketOff, (err) => {
+    if (err) {
+      console.error("Error subscribing:", err);
+    } else {
+      console.log(`Subscribed to ${socketOff}`);
+    }
+  });
+});
+
+// Handle incoming messages on the subscribed topic
+client.on("message", (topic, message) => {
+  console.log(`Received message on topic ${topic}: ${message.toString().split("-")[1]}`);
+  // You can handle/process the incoming message data here
+  try {
+    updateRealtimeFirebase('socket_switch',false);
+    updateRealtimeFirebase('timer',false);
+  } catch (error) {
+    console.error('Error updating value:', error);
+  }
+});
+
+// Handle errors
+client.on("error", (err) => {
+  console.error("Error:", err);
+});
+
 
 
 const PORT = process.env.PORT || 3000;
