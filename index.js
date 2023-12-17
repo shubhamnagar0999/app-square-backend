@@ -13,7 +13,7 @@ const updateRealtimeFirebase = (key,value) => {
     const keyRef = dbRealtime.ref(`/appliances/${key}`);
     // Update the value of the key
     keyRef.set(value);
-    console.log(`Value updated because of set time `);
+    console.log(`Value updated of ${key} : ${value}`);
 }
 
 // ----->functions end<------
