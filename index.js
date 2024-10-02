@@ -40,7 +40,9 @@ app.post("/mqtt", (req, res) => {
     endHoure: `${req.body.endHoure}`,
     endMin: `${req.body.endMin}`,
     timer: `${req.body.timer}`,
+    room: `${req.body.room}`
   };
+
   client.publish(applianceNameStatus, JSON.stringify(mqtt_payload), (err) => {
     if (err) {
       console.error("Error publishing message:", err);
