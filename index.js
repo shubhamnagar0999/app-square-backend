@@ -74,7 +74,7 @@ app.post("/mqtt-status", (req, res) => {
       res.status(504).json({ status: "inactive", message: "MQTT connection timed out." });
       tempClient.end(); 
     }
-  }, 15000); 
+  }, 30000); 
 });
 // ===================================== mqtt server status end =========================================================
 
