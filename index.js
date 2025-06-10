@@ -4,28 +4,22 @@ const mqtt = require("mqtt");
 const app = express();
 app.use(express.json());
 
-// method for testing
 app.get("", (req, res) => {
   res.json({ data: "data for test." });
-  // res.send("test url")
 });
 
 // =====================================  mqtt server starts =========================================================
 
 // MQTT broker/server configuration
 // const brokerUrl = "mqtt://91.121.93.94:1883";
-const brokerUrl = "https://test.mosquitto.org/"; // Replace 'your-broker-url' with the actual URL
-const applianceNameStatus = "applianceNameStatus"; // Replace 'your/topic' with the desired topic
-
-// Create a MQTT client
+const brokerUrl = "https://test.mosquitto.org/"; 
+const applianceNameStatus = "applianceNameStatus"; 
 const client = mqtt.connect(brokerUrl);
 
-// When the client is connected
 client.on("connect", () => {
   console.log("Connected to MQTT broker");
 });
 
-// Handle errors
 client.on("error", (err) => {
   console.error("Error:", err);
 });
@@ -53,6 +47,36 @@ app.post("/mqtt", (req, res) => {
 });
 
 // ===================================== mqtt server ends =========================================================
+// ===================================== mqtt server status start =========================================================
+app.post("/mqtt-status", (req, res) => {
+  const tempClient = mqtt.connect(brokerUrl);
+  let responded = false;
+
+  tempClient.on("connect", () => {
+    if (!responded) {
+      responded = true;
+      res.json({ status: "active", message: "MQTT connection successful." });
+      tempClient.end(); 
+    }
+  });
+
+  tempClient.on("error", (err) => {
+    if (!responded) {
+      responded = true;
+      res.status(500).json({ status: "inactive", message: "MQTT connection failed.", error: err.message });
+      tempClient.end(); 
+    }
+  });
+
+  setTimeout(() => {
+    if (!responded) {
+      responded = true;
+      res.status(504).json({ status: "inactive", message: "MQTT connection timed out." });
+      tempClient.end(); 
+    }
+  }, 15000); 
+});
+// ===================================== mqtt server status end =========================================================
 
 // Handle server shutdown gracefully by closing the MQTT connection
 process.on("SIGINT", () => {
